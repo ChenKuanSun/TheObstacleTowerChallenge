@@ -1,0 +1,8 @@
+{
+    "challenge_id" : "unity-obstacle-tower-challenge-2019",
+    "grader_id": "unity-obstacle-tower-challenge-2019",
+    "authors" : ["ChenKuan Sun", "CHI-SHENG WU", "Warren Wang", "Quei-An Chen"],
+    "description" : "Obstacle Tower random agent",
+	"gpu": true,
+	"debug": true
+}

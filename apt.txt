@@ -1,0 +1,8 @@
+curl
+git
+xvfb
+ffmpeg
+libsm6
+libxrender1
+libxext-dev
+gzip
