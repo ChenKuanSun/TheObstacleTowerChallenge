@@ -4,5 +4,5 @@
     "authors" : ["ChenKuan Sun", "CHI-SHENG WU", "Warren Wang", "Quei-An Chen"],
     "description" : "Obstacle Tower random agent",
 	"gpu": true,
-	"debug": true
+	"debug": false
 }

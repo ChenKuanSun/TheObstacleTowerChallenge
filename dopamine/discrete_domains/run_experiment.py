@@ -150,8 +150,6 @@ class Runner(object):
       Checkpointer object.
     """
     assert base_dir is not None
-    # testing eval seed
-    # self.step = 1
     self._logging_file_prefix = logging_file_prefix
     self._log_every_n = log_every_n
     self._num_iterations = num_iterations
@@ -256,7 +254,7 @@ class Runner(object):
     Returns:
       The number of steps taken and the total reward.
     """
-    # print("load Save : ", self._base_dir)
+    # print("load Save")
     # self._initialize_checkpointer_and_maybe_resume('ckpt')
     step_number = 0
     total_reward = 0.
@@ -287,10 +285,7 @@ class Runner(object):
         action = self._agent.step(reward, observation)
 
     self._end_episode(reward)
-    # self.step +=1
-    # if (self.step == 5):
-    #   self._base_dir = './save2/'
-    #   self._create_directories()
+
     return step_number, total_reward
 
   def _run_one_phase(self, min_steps, statistics, run_mode_str):

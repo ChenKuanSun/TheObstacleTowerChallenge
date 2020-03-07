@@ -39,7 +39,9 @@ def compute(done,
         # 過關之後把時間留到下一關，儲存這回合時間供下次計算過關使用
         previous_time_remaining = time_remaining
         previous_stage_time_remaining = time_remaining
-
+        #模型極限，設定好停損點避免亂探索降低平均分數（競賽專用）
+        if stage_clear > 9:
+            reward_total += 100
         # 假設過關的時候有順便吃到果實，所以預設為同時可以加成
     if keys > previous_keys:
         print("Get Key\n\n")
@@ -52,8 +54,8 @@ def compute(done,
         # 時間到就扣100
     if done and time_remaining == 3000 and previous_time_remaining == 0:
         reward_total -= 100
-    if done and previous_time_remaining > 100:
-        # print("Agent died")
+    if done and previous_time_remaining > 100 and stage_clear < 9:
+        print("Agent died")
         # 如果剩餘時間越多就掛點，扣更多
         # reward_total -= (10 + time_remaining / 100)
         reward_total -= 100

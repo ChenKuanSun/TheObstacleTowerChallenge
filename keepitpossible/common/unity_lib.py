@@ -35,9 +35,9 @@ import tensorflow as tf
 slim = tf.contrib.slim
 
 
-NATURE_DQN_OBSERVATION_SHAPE = (168, 168)  # Size of downscaled Atari 2600 frame.
+NATURE_DQN_OBSERVATION_SHAPE = (168, 168, 3)  # Size of downscaled Atari 2600 frame.
 NATURE_DQN_DTYPE = tf.uint8  # DType of Atari 2600 observations.
-NATURE_DQN_STACK_SIZE = 4  # Number of frames in the state stack.
+NATURE_DQN_STACK_SIZE = 8  # Number of frames in the state stack.
 
 
 def nature_dqn_network(num_actions, network_type, state):
@@ -53,6 +53,7 @@ def nature_dqn_network(num_actions, network_type, state):
     """
     net = tf.cast(state, tf.float32)
     net = tf.div(net, 255.)
+    net = tf.reshape(net, [tf.shape(net)[0], tf.shape(net)[1], tf.shape(net)[2], -1])
     net = slim.conv2d(net, 32, [8, 8], stride=4)
     net = slim.conv2d(net, 64, [4, 4], stride=2)
     net = slim.conv2d(net, 64, [3, 3], stride=1)
@@ -80,6 +81,7 @@ def rainbow_network(num_actions, num_atoms, support, network_type, state):
 
     net = tf.cast(state, tf.float32)
     net = tf.div(net, 255.)
+    net = tf.reshape(net, [tf.shape(net)[0], tf.shape(net)[1], tf.shape(net)[2], -1])
     net = slim.conv2d(
         net, 32, [8, 8], stride=4, weights_initializer=weights_initializer)
     net = slim.conv2d(
@@ -120,6 +122,7 @@ def implicit_quantile_network(num_actions, quantile_embedding_dim,
 
     state_net = tf.cast(state, tf.float32)
     state_net = tf.div(state_net, 255.)
+    state_net = tf.reshape(state_net, [tf.shape(state_net)[0], tf.shape(state_net)[1], tf.shape(state_net)[2], -1])
     state_net = slim.conv2d(
         state_net, 32, [8, 8], stride=4,
         weights_initializer=weights_initializer)
@@ -183,8 +186,8 @@ class OTCPreprocessing(object):
         self.previous_keys = 0
         self.stage_clear = 0
         self.previous_time_remaining = 3000
-        # self.stuck = False
         self.table_action = action_table.create_rainbow_action_table()
+        self.stuck = False
 
     @property
     def observation_space(self):
@@ -222,8 +225,8 @@ class OTCPreprocessing(object):
         self.time_remaining = 3000
         self.stage_clear = 0
         self.previous_stage_time_remaining = 3000
-        # self.observation_ = observation[0]
-        processed_observation = image_processed.gray_progress_bar(image=observation[0],
+        self.observation_ = observation[0]
+        processed_observation = image_processed.rgb_progress_bar(image=observation[0],
                                                                   stage_clear=self.stage_clear,
                                                                   time_remaining=self.time_remaining,
                                                                   keys=self.keys)
@@ -272,23 +275,21 @@ class OTCPreprocessing(object):
         self.previous_keys = self.keys
         self.previous_reward = self.reward
         self.previous_time_remaining = self.time_remaining
-        
-        # if self.stuck:
-        #     action = 3
-        #     self.stuck = False
 
+        if self.stuck:
+            action = 3
+            self.stuck = False
         # 做出動作，獲得場景資訊,已過關數,代理資訊
         observation, self.reward, self.game_over, info = self.environment.step(self.table_action[int(action)])
         # 預處理模型需要的資料
         observation, self.keys, self.time_remaining = observation
-
         # 卡住的處理方法
-        # if not self.stuck:
-        #   if np.sum(np.abs(observation-self.observation_)) < 1000:
-        #     print("Stuck!")
-        #     self.stuck = True
-        # self.observation_ = observation
-        
+        if not self.stuck:
+          if np.sum(np.abs(observation-self.observation_)) < 1000:
+            print("Stuck!")
+            self.stuck = True
+        self.observation_ = observation
+
         self.stage_reward, self.previous_stage_time_remaining, self.game_over, self.stage_clear = reward_function.compute(done=self.game_over,
                                                                                                                           stage_clear=self.stage_clear,
                                                                                                                           reward_total=self.stage_reward,
@@ -301,7 +302,7 @@ class OTCPreprocessing(object):
                                                                                                                           previous_stage_time_remaining=self.previous_stage_time_remaining)
         self.stage_reward -= 1
         self.stage_reward /= 300
-        processed_observation = image_processed.gray_progress_bar(image=observation,
+        processed_observation = image_processed.rgb_progress_bar(image=observation,
                                                                   stage_clear=self.stage_clear,
                                                                   time_remaining=self.time_remaining,
                                                                   keys=self.keys)
